@@ -22,30 +22,18 @@ pub fn (mut r Range[T]) next() ?T {
 	return r.cur
 }
 
-@[params]
-pub struct RangeConfig {
-pub:
-	// If true exclude the end value from range.
-	exclusive bool
-}
-
 // range creates new Range iterator with given start, end and step values.
 //
 // Generally numbers are expected. If type is a struct the following operators
 // must be overloaded to perform comparisons and arithmetics: `+`, `-`, `<`, `==`.
 // See https://docs.vlang.io/limited-operator-overloading.html for details.
 //
-// By default, the range includes the end value. This behavior can be changed
-// by enabling the 'exclusive' option.
+// The range includes the end value.
 //
 // Note: Zero step value will cause an infitite loop!
-pub fn range[T](start T, end T, step T, config RangeConfig) Range[T] {
-	mut limit := end
-	if config.exclusive {
-		limit -= step
-	}
+pub fn range[T](start T, end T, step T) Range[T] {
 	return Range[T]{
-		limit:  limit
+		limit:  end
 		step:   step
 		cur:    start
 		is_neg: start > end
@@ -54,7 +42,6 @@ pub fn range[T](start T, end T, step T, config RangeConfig) Range[T] {
 
 @[params]
 pub struct RangeFromStringConfig {
-	RangeConfig
 pub:
 	sep       string = '-'
 	group_sep string = ','
@@ -92,7 +79,7 @@ pub fn from_string[T](s string, config RangeFromStringConfig) ![]Range[T] {
 			convert_string[T](range_str[0])!,
 			convert_string[T](range_str[1])!,
 			convert_string[T](range_str[2])!,
-			config.RangeConfig)
+		)
 		// vfmt on
 	}
 	return result
@@ -133,7 +120,7 @@ pub fn from_string_custom[T](s string, conv StringConvertFn[T], config RangeFrom
 		start := conv[T](range_str[0])!
 		end := conv[T](range_str[1])!
 		step := conv[T](range_str[2])!
-		result << range(start, end, step, config.RangeConfig)
+		result << range(start, end, step)
 	}
 	return result
 }

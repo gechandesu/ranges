@@ -9,28 +9,12 @@ fn test_range() {
 	assert result == [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 }
 
-fn test_range_exclusive() {
-	mut result := []int{}
-	for i in ranges.range[int](0, 10, 1, exclusive: true) {
-		result << i
-	}
-	assert result == [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-}
-
 fn test_range_negative() {
 	mut result := []int{}
 	for i in ranges.range[int](10, 0, -1) {
 		result << i
 	}
 	assert result == [10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0]
-}
-
-fn test_range_negative_exclusive() {
-	mut result := []int{}
-	for i in ranges.range[int](10, 0, -1, exclusive: true) {
-		result << i
-	}
-	assert result == [10, 9, 8, 7, 6, 5, 4, 3, 2, 1]
 }
 
 fn test_range_with_step() {
@@ -60,14 +44,6 @@ fn test_range_with_non_odd_step() {
 fn test_range_single_item() {
 	mut result := []int{}
 	for i in ranges.range(0, 0, 1) {
-		result << i
-	}
-	assert result == [0]
-}
-
-fn test_range_single_item_exclusive() {
-	mut result := []int{}
-	for i in ranges.range(0, 1, 1, exclusive: true) {
 		result << i
 	}
 	assert result == [0]
