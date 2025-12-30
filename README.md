@@ -3,7 +3,7 @@
 The `ranges` module provides tools for creating ranges of numbers.
 
 Ranges are represented by the generic `Range` iterator, which has start and
-end points, and a step size.
+end points and a step size.
 
 ```v
 import ranges
