@@ -32,11 +32,9 @@ pub fn (mut r Range[T]) reset() {
 // with_step returns copy of the range with new step value.
 pub fn (r Range[T]) with_step[T](step T) Range[T] {
 	return Range[T]{
-		start:  r.start
-		end:    r.end
-		step:   step
-		is_neg: r.is_neg
-		cur:    r.start
+		...r
+		step: step
+		cur:  r.start
 	}
 }
 
