@@ -4,7 +4,8 @@ import strconv
 import math.big
 
 struct Range[T] {
-	limit  T
+	start  T
+	end    T
 	step   T
 	is_neg bool
 mut:
@@ -13,13 +14,30 @@ mut:
 
 // next returns the new element from range or none if range end is reached.
 pub fn (mut r Range[T]) next() ?T {
-	if (r.is_neg && r.cur < r.limit) || (!r.is_neg && r.cur > r.limit) {
+	if (r.is_neg && r.cur < r.end) || (!r.is_neg && r.cur > r.end) {
 		return none
 	}
 	defer {
 		r.cur += r.step
 	}
 	return r.cur
+}
+
+// reset resets the internal iterator state to its initial value, after which the iterator can be reused.
+// Note: `for i in iter {` does not modify the internal iterator state, but direct `next()` call does.
+pub fn (mut r Range[T]) reset() {
+	r.cur = r.start
+}
+
+// with_step returns copy of the range with new step value.
+pub fn (r Range[T]) with_step[T](step T) Range[T] {
+	return Range[T]{
+		start:  r.start
+		end:    r.end
+		step:   step
+		is_neg: r.is_neg
+		cur:    r.start
+	}
 }
 
 // range creates new Range iterator with given start, end and step values.
@@ -33,7 +51,8 @@ pub fn (mut r Range[T]) next() ?T {
 // Note: Zero step value will cause an infitite loop!
 pub fn range[T](start T, end T, step T) Range[T] {
 	return Range[T]{
-		limit:  end
+		start:  start
+		end:    end
 		step:   step
 		cur:    start
 		is_neg: start > end
@@ -52,7 +71,7 @@ pub:
 // Use from_string_custom if you want to use custom type with special string
 // convertion rules.
 //
-// Supported string formats are `start-end`, `start[:step]end`. start and end
+// Supported string formats are `start-end` and `start[:step]end`. start and end
 // values are sepatared by 'sep' which is hypen (`-`) by default. Single number
 // will be interpreted as range of one element. Several ranges can be specified
 // in a line, separated by 'group_sep' (comma by default). 'sep' and 'group_sep'

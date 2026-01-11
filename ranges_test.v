@@ -145,3 +145,36 @@ fn test_range_from_string_custom_type() {
 		sep: '..'
 	)! == [ranges.range[Int](Int{0}, Int{10}, Int{1})]
 }
+
+fn test_range_reset() {
+	mut result := []int{}
+	mut iter := ranges.range(0, 5, 1)
+
+	for {
+		if elem := iter.next() {
+			result << elem
+		} else {
+			break
+		}
+	}
+	assert result == [0, 1, 2, 3, 4, 5]
+
+	iter.reset()
+
+	result = []int{}
+
+	for i in iter {
+		result << i
+	}
+	assert result == [0, 1, 2, 3, 4, 5]
+}
+
+fn test_range_new_with_step() {
+	mut result := []int{}
+	mut iter := ranges.range(0, 5, 1)
+
+	for i in iter.with_step(2) {
+		result << i
+	}
+	assert result == [0, 2, 4]
+}
