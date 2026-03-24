@@ -179,3 +179,11 @@ fn test_range_new_with_step() {
 	}
 	assert result == [0, 2, 4]
 }
+
+fn test_range_bounds() {
+	r := ranges.range(0, 10, 2)
+	a, b, c := r.bounds()
+	assert a == 0
+	assert b == 10
+	assert c == 2
+}

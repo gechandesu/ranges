@@ -3,9 +3,7 @@ module ranges
 import strconv
 import math.big
 
-@[noinit]
-pub struct Range[T] {
-pub:
+struct Range[T] {
 	start  T
 	end    T
 	step   T
@@ -29,6 +27,11 @@ pub fn (mut r Range[T]) next() ?T {
 // Note: `for i in iter {` does not modify the internal iterator state, but direct `next()` call does.
 pub fn (mut r Range[T]) reset() {
 	r.cur = r.start
+}
+
+// bounds returns the start, end and step values of range.
+pub fn (r Range[T]) bounds() (T, T, T) {
+	return r.start, r.end, r.step
 }
 
 // with_step returns copy of the range with new step value.
