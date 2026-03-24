@@ -87,6 +87,7 @@ fn test_range_from_string() {
 	assert ranges.from_string[f32]('0.0..99.99', sep: '..')! == [
 		ranges.range[f32](0.0, 99.99, 1),
 	]
+	assert ranges.from_string[int]('0-100/5')! == [ranges.range(0, 100, 5)]
 }
 
 struct Int {

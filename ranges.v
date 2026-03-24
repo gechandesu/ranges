@@ -3,11 +3,13 @@ module ranges
 import strconv
 import math.big
 
-struct Range[T] {
+@[noinit]
+pub struct Range[T] {
+pub:
 	start  T
 	end    T
 	step   T
-	is_neg bool
+	is_neg bool // Is set to true if range end value is lesser than start value.
 mut:
 	cur T
 }
@@ -69,28 +71,28 @@ pub:
 // Use from_string_custom if you want to use custom type with special string
 // convertion rules.
 //
-// Supported string formats are `start-end` and `start[:step]end`. start and end
-// values are sepatared by 'sep' which is hypen (`-`) by default. Single number
-// will be interpreted as range of one element. Several ranges can be specified
-// in a line, separated by 'group_sep' (comma by default). 'sep' and 'group_sep'
-// can be overrided by user.
+// Supported string formats are `start-end[/step]` and `start[:step]:end`. start
+// and end values are sepatared by 'sep' which is hypen (`-`) by default. Single
+// number will be interpreted as range of one element. Several ranges can be
+// specified in a line, separated by 'group_sep' (comma by default). 'sep' and
+// 'group_sep' can be overrided by user.
 //
 // Some example input strings:
 //
 // * `5` - range from 5 to 5 (single element).
 // * `0-10` - range from 0 to 10.
+// * `0-100/5` - range in Cron-style syntax from 0 to 100 with step 5.
 // * `15:-1:0` - range in MathLab-style syntax from 15 to 0 with negative step -1.
 // * `1..8` - range from 1 to 8 with '..' sep.
 // * `0-7,64-71` - multiple ranges: from 0 to 7 and from 64 to 71.
 //
-// Only MathLab-style syntax allows you to specify a step directly in the string.
-// For all other cases, the step is equal to one.
+// If the step value is not specified, it will be set to one.
 //
 // Example: assert ranges.from_string[int]('1-7')! == [ranges.range(1, 7, 1)]
 pub fn from_string[T](s string, config RangeFromStringConfig) ![]Range[T] {
 	mut result := []Range[T]{}
 	for i in s.split(config.group_sep) {
-		range_str := parse_string(i, config.sep)!
+		range_str := split_string(i, config.sep)!
 		// vfmt off
 		result << range[T](
 			convert_string[T](range_str[0])!,
@@ -133,7 +135,7 @@ pub type StringConvertFn[T] = fn (s string) !T
 pub fn from_string_custom[T](s string, conv StringConvertFn[T], config RangeFromStringConfig) ![]Range[T] {
 	mut result := []Range[T]{}
 	for i in s.split(config.group_sep) {
-		range_str := parse_string(i, config.sep)!
+		range_str := split_string(i, config.sep)!
 		start := conv[T](range_str[0])!
 		end := conv[T](range_str[1])!
 		step := conv[T](range_str[2])!
@@ -142,7 +144,7 @@ pub fn from_string_custom[T](s string, conv StringConvertFn[T], config RangeFrom
 	return result
 }
 
-fn parse_string(s string, sep string) ![]string {
+fn split_string(s string, sep string) ![]string {
 	parts := s.split(sep)
 	if parts.any(|x| x.is_blank()) || parts.len !in [1, 2, 3] {
 		return error('`start${sep}end` or `start[:step]:end`' +
@@ -150,12 +152,19 @@ fn parse_string(s string, sep string) ![]string {
 	}
 	if parts.len == 1 {
 		return [parts[0], parts[0], '1']
-	} else if parts.len == 2 {
+	}
+	if parts.len == 2 {
+		if parts[1].contains('/') {
+			end, step := parts[1].split_once('/') or { '', '' }
+			return [parts[0], end, step]
+		}
 		return [parts[0], parts[1], '1']
-	} else if sep == ':' && parts.len == 3 {
+	}
+	if sep == ':' && parts.len == 3 {
 		return [parts[0], parts[2], parts[1]]
 	}
-	return error('invalid range string: ${s}')
+	return error('invalid range string: expected `start[${sep}step]${sep}end` ' +
+		'or `start${sep}end[/step]` format, got `${s}`')
 }
 
 fn convert_string[T](s string) !T {
