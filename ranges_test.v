@@ -1,3 +1,5 @@
+// See bug: https://github.com/vlang/v/issues/27147
+// vtest vflags: -no-skip-unused
 import ranges
 import math.big
 
@@ -111,23 +113,29 @@ fn (a Int) == (b Int) bool {
 }
 
 fn test_range_custom_type() {
-	// vfmt off
 	mut result := []Int{}
-	for i in ranges.range[Int](Int{ val: 0 }, Int{ val: 5 }, Int{ val: 1 }) {
+	start := Int{0}
+	end := Int{5}
+	step := Int{1}
+	for i in ranges.range[Int](start, end, step) {
 		result << i
 	}
-	assert result == [Int{0}, Int{1}, Int{2}, Int{3}, Int{4}, Int{5}]
-	// vfmt on
+	assert result == [
+		Int{0},
+		Int{1},
+		Int{2},
+		Int{3},
+		Int{4},
+		Int{5},
+	]
 }
-
-//
-// Note this bug: https://github.com/vlang/v/issues/26156
-//
 
 fn test_range_from_string_custom_type() {
 	assert ranges.from_string_custom[Int]('0-5', fn (s string) !Int {
 		if s.is_int() {
-			return Int{ val: s.int() }
+			return Int{
+				val: s.int()
+			}
 		} else {
 			return error('invalid integer value: ${s}')
 		}
