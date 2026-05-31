@@ -1,5 +1,3 @@
-// See bug: https://github.com/vlang/v/issues/27147
-// vtest vflags: -no-skip-unused
 import ranges
 import math.big
 
