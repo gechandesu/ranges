@@ -7,14 +7,17 @@ struct Range[T] {
 	start  T
 	end    T
 	step   T
-	is_neg bool // Is set to true if range end value is lesser than start value.
+	is_rev bool // Is set to true if range end value is lesser than start value.
 mut:
 	cur T
 }
 
 // next returns the new element from range or none if range end is reached.
 pub fn (mut r Range[T]) next() ?T {
-	if (r.is_neg && r.cur < r.end) || (!r.is_neg && r.cur > r.end) {
+	if r.step == $zero(T) {
+		return none
+	}
+	if (r.is_rev && r.cur < r.end) || (!r.is_rev && r.cur > r.end) {
 		return none
 	}
 	defer {
@@ -43,6 +46,33 @@ pub fn (r Range[T]) with_step[T](step T) Range[T] {
 	}
 }
 
+// to_array returns an array of elements from the range.
+pub fn (r Range[T]) to_array() []T {
+	if r.is_empty() {
+		return []T{}
+	}
+
+	mut cap := 0
+
+	$if T is $int || T is $float {
+		cap = int((r.end - r.start) / r.step + T(1))
+	} $else $if T is big.Integer {
+		cap = ((r.end - r.start) / r.step + big.one_int).int()
+	}
+
+	mut arr := []T{cap: cap}
+	for el in r {
+		arr << el
+	}
+	return arr
+}
+
+// is_empty reports is the range instance empty (has no values).
+pub fn (r Range[T]) is_empty() bool {
+	empty := $zero(Range[T])
+	return r == empty
+}
+
 // range creates new Range iterator with given start, end and step values.
 //
 // Generally numbers are expected. If type is a struct the following operators
@@ -51,14 +81,34 @@ pub fn (r Range[T]) with_step[T](step T) Range[T] {
 //
 // The range includes the end value.
 //
-// Note: Zero step value will cause an infitite loop!
+// Note: If range cannot be created the empty range will be returned. See also `new()`.
 pub fn range[T](start T, end T, step T) Range[T] {
+	return new(start, end, step) or { Range[T]{} }
+}
+
+// new creates new range with given start, end and step values.
+// Unlike `range`, this function will return an error if:
+//
+// * step value is zero;
+// * step > 0, but start value is greather than end value;
+// * step < 0, but start value is lesser than end value.
+pub fn new[T](start T, end T, step T) !Range[T] {
+	zero := $zero(T)
+	if step == zero {
+		return error('step value is zero')
+	}
+	if step > zero && start > end {
+		return error('step is positive, but start value is greather than end value')
+	}
+	if step < zero && start <= end {
+		return error('step is negative, but start value is lesser than or equals end value')
+	}
 	return Range[T]{
 		start:  start
 		end:    end
 		step:   step
 		cur:    start
-		is_neg: start > end
+		is_rev: start > end
 	}
 }
 
