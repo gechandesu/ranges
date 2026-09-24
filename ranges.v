@@ -37,7 +37,15 @@ pub fn (r Range[T]) bounds() (T, T, T) {
 	return r.start, r.end, r.step
 }
 
-// with_step returns copy of the range with new step value.
+// capacity returns the calculated number of elements in range.
+pub fn (r Range[T]) capacity() int {
+	if !r.is_valid() {
+		return 0
+	}
+	return r.capacity_no_valid_check()
+}
+
+// with_step returns copy of the range with updated step value.
 pub fn (r Range[T]) with_step[T](step T) Range[T] {
 	return Range[T]{
 		...r
@@ -46,20 +54,14 @@ pub fn (r Range[T]) with_step[T](step T) Range[T] {
 	}
 }
 
-// to_array returns an array of elements from the range.
+// to_array returns an array of elements from the range. This method is slightly
+// faster than simply filling an array with elements in a loop, because the
+// memory for the array is pre-allocated.
 pub fn (r Range[T]) to_array() []T {
-	if r.is_empty() {
+	if !r.is_valid() {
 		return []T{}
 	}
-
-	mut cap := 0
-
-	$if T is $int || T is $float {
-		cap = int((r.end - r.start) / r.step + T(1))
-	} $else $if T is big.Integer {
-		cap = ((r.end - r.start) / r.step + big.one_int).int()
-	}
-
+	cap := r.capacity_no_valid_check()
 	mut arr := []T{cap: cap}
 	for el in r {
 		arr << el
@@ -67,10 +69,30 @@ pub fn (r Range[T]) to_array() []T {
 	return arr
 }
 
-// is_empty reports is the range instance empty (has no values).
-pub fn (r Range[T]) is_empty() bool {
-	empty := $zero(Range[T])
-	return r == empty
+// is_valid reports is the range valid.
+pub fn (r Range[T]) is_valid() bool {
+	zero := T{}
+	if r.step == zero {
+		return false
+	}
+	if r.step > zero && r.start > r.end {
+		return false
+	}
+	if r.step < zero && r.start <= r.end {
+		return false
+	}
+	return true
+}
+
+@[inline]
+fn (r Range[T]) capacity_no_valid_check() int {
+	mut cap := 0
+	$if T is $int || T is $float {
+		cap = int((r.end - r.start) / r.step + T(1))
+	} $else $if T is big.Integer {
+		cap = ((r.end - r.start) / r.step + big.one_int).int()
+	}
+	return cap
 }
 
 // range creates new Range iterator with given start, end and step values.
@@ -81,7 +103,8 @@ pub fn (r Range[T]) is_empty() bool {
 //
 // The range includes the end value.
 //
-// Note: If range cannot be created the empty range will be returned. See also `new()`.
+// Note: If range cannot be created the empty range will be returned.
+// Is it recommended to check range with `is_valid()`. See also `new()`.
 pub fn range[T](start T, end T, step T) Range[T] {
 	return new(start, end, step) or { Range[T]{} }
 }
@@ -200,8 +223,7 @@ pub fn from_string_custom[T](s string, conv StringConvertFn[T], config RangeFrom
 fn split_string(s string, sep string) ![]string {
 	parts := s.split(sep)
 	if parts.any(|x| x.is_blank()) || parts.len !in [1, 2, 3] {
-		return error('`start${sep}end` or `start[:step]:end`' +
-			"formatted string expected, not '${s}'")
+		return error('`start${sep}end` or `start[:step]:end`' + "formatted string expected, not '${s}'")
 	}
 	if parts.len == 1 {
 		return [parts[0], parts[0], '1']
@@ -216,8 +238,7 @@ fn split_string(s string, sep string) ![]string {
 	if sep == ':' && parts.len == 3 {
 		return [parts[0], parts[2], parts[1]]
 	}
-	return error('invalid range string: expected `start[${sep}step]${sep}end` ' +
-		'or `start${sep}end[/step]` format, got `${s}`')
+	return error('invalid range string: expected `start[${sep}step]${sep}end` ' + 'or `start${sep}end[/step]` format, got `${s}`')
 }
 
 fn convert_string[T](s string) !T {

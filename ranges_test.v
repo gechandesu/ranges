@@ -240,9 +240,9 @@ fn test_range_empty_bigint() {
 	assert r.to_array() == []
 }
 
-fn test_range_is_empty() {
+fn test_range_is_valid() {
 	r := ranges.range(0, 0, -9000)
-	assert r.is_empty()
+	assert !r.is_valid()
 	assert r.to_array() == []
 }
 
@@ -305,4 +305,14 @@ fn test_new_error_negative_step_start_eq_end() {
 	} else {
 		assert err.msg() == 'step is negative, but start value is lesser than or equals end value'
 	}
+}
+
+fn test_range_capacity() {
+	r := ranges.range(0, 9, 1)
+	assert r.capacity() == 10
+}
+
+fn test_range_capacity_non_one_step() {
+	r := ranges.range(0, 9, 2)
+	assert r.capacity() == 5
 }
