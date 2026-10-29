@@ -258,8 +258,8 @@ fn convert_string[T](s string) !T {
 		i64 {
 			return strconv.atoi64(s)!
 		}
-		isize {
-			return isize(strconv.atoi64(s)!)
+		uint {
+			return uint(strconv.atou64(s)!)
 		}
 		u8 {
 			return strconv.atou8(s)!
@@ -272,9 +272,6 @@ fn convert_string[T](s string) !T {
 		}
 		u64 {
 			return strconv.atou64(s)!
-		}
-		usize {
-			return usize(strconv.atou64(s)!)
 		}
 		f32 {
 			return f32(strconv.atof64(s)!)
